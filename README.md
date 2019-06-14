@@ -13,6 +13,6 @@ It does use multiple cores though, if you have them.
 
 On Linux with an nvidia GPU it should be fast.
 
-I don't even know if you can run TF on Windows.
+I think you can run TF on Windows.
 
 ![Example](ex1.png)
