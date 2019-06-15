@@ -2,6 +2,13 @@
 
 Abelian Sandpiles
 
+Ported to jax.
+Install jax with `pip install jax jaxlib`.
+Run with `python jaxpile.py`.
+Docs much the same as old docs for jax.py.
+
+Old TF version
+--------------
 Instructions in the comments.
 
 You'll need Tensorflow 2. I installed it with the command
