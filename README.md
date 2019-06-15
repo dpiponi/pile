@@ -2,8 +2,10 @@
 
 Abelian Sandpiles
 
-Ported to jax.
+Ported to jax. Much faster than TF version.
+I think it's still slower than raw CUDA.
 Install jax with `pip install jax jaxlib`.
+Install PIL with `pip install pillow`.
 Run with `python jaxpile.py`.
 Docs much the same as old docs for jax.py.
 
