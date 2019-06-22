@@ -15,11 +15,10 @@ func stable(width : Int, height : Int,
                 ? [inputBuffer1, widthHeightBuffer, outputBuffer]
                 : [outputBuffer, widthHeightBuffer, inputBuffer1])
 
-            exec(commandQueue,
-                pipelineState: pipelineState,
-                buffers: buffers,
-                numThreadGroups: numThreadgroups,
-                numThreadsPerThreadgroup: threadsPerThreadgroup);
+            explodeKernel.exec(commandQueue,
+                               buffers: buffers,
+                               numThreadGroups: numThreadgroups,
+                               numThreadsPerThreadgroup: threadsPerThreadgroup);
         }
 
         let tallest = maxGrains(inputBuffer: inputBuffer1, width: width, height: height)
