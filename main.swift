@@ -1,20 +1,25 @@
 import MetalKit
 
 func main() {
-    let height : Int = 768
-    let width : Int = 768
-    let doubles = 18;
+    let height : Int = 1024
+    let width : Int = 1024
 
     let z = Int(CommandLine.arguments[1])!
+    let doubles = z
 
 //    let seeds : [(Int, UInt8)] = [
 //        (width / 2 + (height / 2) * width - z, 1),
 //        (width / 2 + (height / 2) * width + z, 1)
 //    ]
 
+//    let seeds : [(Int, UInt8)] = [
+//        (width / 2 + (height / 2) * width, 1)
+//    ]
+
     let seeds : [(Int, UInt8)] = [
-        (width / 2 + (height / 2) * width, 1)
+        (0, 1)
     ]
+
     let noseeds : [(Int, UInt8)] = []
 
     let rgbBuffer = makeRgbBuffer(width:width, height:height)
@@ -25,9 +30,9 @@ func main() {
     print("Start")
     for i in 0...doubles-1 {
         print("Doubles to go", doubles - i)
-        stable(width: width, height: height,
-               inputBuffer1: inputBuffer1, outputBuffer: outputBuffer,
-               widthHeightBuffer: widthHeightBuffer)
+        symmetricStable(width: width, height: height,
+                        inputBuffer1: inputBuffer1, outputBuffer: outputBuffer,
+                        widthHeightBuffer: widthHeightBuffer)
         twoTimes(width: width, height: height,
                   inputBuffer1: inputBuffer1,
                   widthHeightBuffer: widthHeightBuffer)

@@ -1,15 +1,15 @@
 SDK = xcrun -sdk macosx
 
-all: explode.metallib explode
+all: pile.metallib pile
 
-explode.metallib: explode.metal
+pile.metallib: pile.metal
 	# Metal intermediate representation (.air)
-	$(SDK) metal -O3 -c -Wall -Wextra -std=osx-metal2.0 -o /tmp/explode.air $^
+	$(SDK) metal -O3 -c -Wall -Wextra -std=osx-metal2.0 -o /tmp/pile.air $^
 	# Metal library (.metallib)
-	$(SDK) metallib -o $@ /tmp/explode.air
+	$(SDK) metallib -o $@ /tmp/pile.air
 
-explode: main.swift explode.swift
+pile: main.swift pile.swift
 	$(SDK) swiftc -g -o $@ $^
 
 clean:
-	rm -f explode.metallib explode
+	rm -f pile.metallib pile

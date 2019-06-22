@@ -14,7 +14,7 @@ import MetalKit
 
 let device = MTLCreateSystemDefaultDevice()!
 let commandQueue = device.makeCommandQueue()!
-let library = try! device.makeLibrary(filepath: "explode.metallib")
+let library = try! device.makeLibrary(filepath: "pile.metallib")
 
 func makePipeline(kernelName: String) -> MTLComputePipelineState {
     return try! device.makeComputePipelineState(
@@ -62,7 +62,6 @@ class Kernel {
     }
 
     func exec(_ commandQueue : MTLCommandQueue,
-               //pipelineState : MTLComputePipelineState,
                buffers : [MTLBuffer],
                numThreadGroups : MTLSize,
                numThreadsPerThreadgroup : MTLSize,
@@ -127,13 +126,10 @@ class Kernel2d: Kernel {
 }
 
 let explodeKernel = Kernel2d(kernelName: "explode")
+let symmetricExplodeKernel = Kernel2d(kernelName: "symmetric_explode")
 let twoKernel = Kernel2d(kernelName: "two_times")
 let rgbKernel = Kernel2d(kernelName: "make_rgb")
 let reduceKernel = Kernel1d(kernelName: "max_grains")
-
-// Threads XXX bad, needs to not be shared by all
-//let w = explodeKernel.pipelineState.threadExecutionWidth
-//let h = explodeKernel.pipelineState.maxTotalThreadsPerThreadgroup / w
 
 func stable(width : Int, height : Int,
             inputBuffer1 : MTLBuffer, outputBuffer : MTLBuffer,
@@ -158,6 +154,29 @@ func stable(width : Int, height : Int,
     }
 }
 
+func symmetricStable(width : Int, height : Int,
+                     inputBuffer1 : MTLBuffer, outputBuffer : MTLBuffer,
+                     widthHeightBuffer : MTLBuffer) -> Void {
+
+    while true {
+        // Needs to be an even length loop
+        for t in 0...255 {
+            let buffers = (t % 2 == 0
+                ? [inputBuffer1, widthHeightBuffer, outputBuffer]
+                : [outputBuffer, widthHeightBuffer, inputBuffer1])
+
+            symmetricExplodeKernel.exec2d(commandQueue,
+                                          buffers: buffers,
+                                          width: width, height: height);
+        }
+
+        let tallest = maxGrains(inputBuffer: inputBuffer1, width: width, height: height)
+        if (tallest < 4) {
+          return
+        }
+    }
+}
+
 func pointerFromBuffer<T>(_ buffer : MTLBuffer, capacity: Int) -> UnsafeMutablePointer<T> {
     let contents : UnsafeMutableRawPointer = buffer.contents()
     return contents.bindMemory(to: T.self, capacity: capacity)
@@ -167,7 +186,6 @@ func maxGrains(inputBuffer: MTLBuffer, width: Int, height: Int) -> UInt32 {
     let result : [UInt32] = [0]
     let resultBuffer = makeBufferFrom(result)
 
-    //let w = explodeKernel.pipelineState.maxTotalThreadsPerThreadgroup
     reduceKernel.exec1d(commandQueue,
                         buffers: [inputBuffer, resultBuffer],
                         width: width, height: height,

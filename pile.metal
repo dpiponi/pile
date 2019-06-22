@@ -28,6 +28,37 @@ kernel void explode(const device uint8_t *in [[ buffer(0) ]],
   }
 }
 
+kernel void symmetric_explode(const device uint8_t *in [[ buffer(0) ]],
+                              device uint *width_height [[ buffer(1) ]],
+                              device uint8_t *out [[ buffer(2) ]],
+                              uint2 id [[ thread_position_in_grid ]]) {
+  uint height = width_height[0];
+  uint width = width_height[1];
+
+  if (id.y < height && id.x < width) {
+      uint offset = width * id.y + id.x;
+      uint8_t count = in[offset];
+      count = count % 4;
+      if (id.x > 0) {
+          count += in[offset - 1] / 4;
+      } else {
+          count += in[offset + 1] / 4;
+      }
+      if (id.y > 0) {
+          count += in[offset - width] / 4;
+      } else {
+          count += in[offset + width] / 4;
+      }
+      if (id.x < width - 1) {
+          count += in[offset + 1] / 4;
+      }
+      if (id.y < height - 1) {
+          count += in[offset + width] / 4;
+      }
+      out[offset] = count;
+  }
+}
+
 kernel void make_rgb(const device uint8_t *in [[ buffer(0) ]],
                      device uint *width_height [[ buffer(1) ]],
                      device uint8_t *out [[ buffer(2) ]],
@@ -37,8 +68,8 @@ kernel void make_rgb(const device uint8_t *in [[ buffer(0) ]],
 
   if (id.y < height && id.x < width) {
       uint offset = width * id.x + id.y;
-      out[3 * offset] = in[offset] * 137;
-      out[3 * offset + 1] = in[offset] * 201;
+      out[3 * offset] = in[offset] * 107;
+      out[3 * offset + 1] = in[offset] * 187;
       out[3 * offset + 2] = in[offset] * 87;
   }
 }
