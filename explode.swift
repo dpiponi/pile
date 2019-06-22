@@ -51,8 +51,14 @@ let resultBuffer = makeBufferFrom(result)
 
 class Kernel {
     var pipelineState : MTLComputePipelineState
+    var w : Int
+    var h : Int
+
     init(kernelName: String) {
         pipelineState = makePipeline(kernelName: kernelName)
+
+        w = pipelineState.threadExecutionWidth
+        h = pipelineState.maxTotalThreadsPerThreadgroup / w
     }
 
     func exec(_ commandQueue : MTLCommandQueue,
@@ -81,19 +87,76 @@ class Kernel {
     }
 }
 
-//let pipelineState = makePipeline(kernelName: "explode")
-//let rgbPipelineState = makePipeline(kernelName: "make_rgb")
-//let twoPipelineState = makePipeline(kernelName: "two_times")
-//let reducePipelineState = makePipeline(kernelName: "max_grains")
+class Kernel1d: Kernel {
+    func exec1d(_ commandQueue : MTLCommandQueue,
+               buffers : [MTLBuffer],
+               width: Int,
+               height: Int,
+               sharedMemoryLen : Int = 0) -> Void {
 
-let explodeKernel = Kernel(kernelName: "explode")
-let rgbKernel = Kernel(kernelName: "make_rgb")
-let twoKernel = Kernel(kernelName: "two_times")
-let reduceKernel = Kernel(kernelName: "max_grains")
+        let numThreadgroups = MTLSize(width: (width*height + w - 1) / w,
+                                      height: 1, depth: 1)
+        let threadsPerThreadgroup = MTLSize(width: w, height: 1, depth: 1)
 
-// Threads
-let w = explodeKernel.pipelineState.threadExecutionWidth
-let h = explodeKernel.pipelineState.maxTotalThreadsPerThreadgroup / w
+        exec(commandQueue,
+             buffers: buffers,
+             numThreadGroups: numThreadgroups,
+             numThreadsPerThreadgroup: threadsPerThreadgroup,
+             sharedMemoryLen: sharedMemoryLen);
+    }
+}
+
+class Kernel2d: Kernel {
+    func exec2d(_ commandQueue : MTLCommandQueue,
+               buffers : [MTLBuffer],
+               width: Int,
+               height: Int,
+               sharedMemoryLen : Int = 0) -> Void {
+
+        let numThreadgroups = MTLSize(width: (width + w - 1) / w,
+                                       height: (height + h - 1) / h,
+                                       depth: 1)
+        let threadsPerThreadgroup = MTLSize(width: w, height: h, depth: 1)
+
+        exec(commandQueue,
+             buffers: buffers,
+             numThreadGroups: numThreadgroups,
+             numThreadsPerThreadgroup: threadsPerThreadgroup,
+             sharedMemoryLen: sharedMemoryLen);
+    }
+}
+
+let explodeKernel = Kernel2d(kernelName: "explode")
+let twoKernel = Kernel2d(kernelName: "two_times")
+let rgbKernel = Kernel2d(kernelName: "make_rgb")
+let reduceKernel = Kernel1d(kernelName: "max_grains")
+
+// Threads XXX bad, needs to not be shared by all
+//let w = explodeKernel.pipelineState.threadExecutionWidth
+//let h = explodeKernel.pipelineState.maxTotalThreadsPerThreadgroup / w
+
+func stable(width : Int, height : Int,
+            inputBuffer1 : MTLBuffer, outputBuffer : MTLBuffer,
+            widthHeightBuffer : MTLBuffer) -> Void {
+
+    while true {
+        // Needs to be an even length loop
+        for t in 0...255 {
+            let buffers = (t % 2 == 0
+                ? [inputBuffer1, widthHeightBuffer, outputBuffer]
+                : [outputBuffer, widthHeightBuffer, inputBuffer1])
+
+            explodeKernel.exec2d(commandQueue,
+                                 buffers: buffers,
+                                 width: width, height: height);
+        }
+
+        let tallest = maxGrains(inputBuffer: inputBuffer1, width: width, height: height)
+        if (tallest < 4) {
+          return
+        }
+    }
+}
 
 func pointerFromBuffer<T>(_ buffer : MTLBuffer, capacity: Int) -> UnsafeMutablePointer<T> {
     let contents : UnsafeMutableRawPointer = buffer.contents()
@@ -101,50 +164,34 @@ func pointerFromBuffer<T>(_ buffer : MTLBuffer, capacity: Int) -> UnsafeMutableP
 }
 
 func maxGrains(inputBuffer: MTLBuffer, width: Int, height: Int) -> UInt32 {
-    let w = explodeKernel.pipelineState.maxTotalThreadsPerThreadgroup
-    let numThreadgroups = MTLSize(width: (width*height + w - 1) / w,
-                                  height: 1,
-                                  depth: 1)
-    let threadsPerThreadgroup = MTLSize(width: w, height: 1, depth: 1)
-
     let result : [UInt32] = [0]
     let resultBuffer = makeBufferFrom(result)
 
-    reduceKernel.exec(commandQueue,
-                      buffers: [inputBuffer, resultBuffer],
-                      numThreadGroups: numThreadgroups,
-                      numThreadsPerThreadgroup: threadsPerThreadgroup,
-                      sharedMemoryLen: w * MemoryLayout<Int32>.stride)
+    //let w = explodeKernel.pipelineState.maxTotalThreadsPerThreadgroup
+    reduceKernel.exec1d(commandQueue,
+                        buffers: [inputBuffer, resultBuffer],
+                        width: width, height: height,
+                        sharedMemoryLen: reduceKernel.w * MemoryLayout<Int32>.stride)
 
     return pointerFromBuffer(resultBuffer, capacity: 1)[0]
 }
 
 func twoTimes(width : Int, height : Int, inputBuffer1 : MTLBuffer,
               widthHeightBuffer : MTLBuffer) -> Void {
-    let numThreadgroups = MTLSize(width: (width + w - 1) / w,
-                                  height: (height + h - 1) / h,
-                                  depth: 1)
-    let threadsPerThreadgroup = MTLSize(width: w, height: h, depth: 1)
 
-    twoKernel.exec(commandQueue,
-                   buffers: [inputBuffer1, widthHeightBuffer],
-                   numThreadGroups: numThreadgroups,
-                   numThreadsPerThreadgroup: threadsPerThreadgroup)
+    twoKernel.exec2d(commandQueue,
+                     buffers: [inputBuffer1, widthHeightBuffer],
+                     width: width, height: height)
 }
 
 func saveImage(filename : String, width : Int, height : Int,
                inputBuffer1: MTLBuffer,
                rgbBuffer : MTLBuffer,
                widthHeightBuffer: MTLBuffer) -> Void {
-    let numThreadgroups = MTLSize(width: (width + w - 1) / w,
-                                   height: (height + h - 1) / h,
-                                   depth: 1)
-    let threadsPerThreadgroup = MTLSize(width: w, height: h, depth: 1)
 
-    rgbKernel.exec(commandQueue,
-                   buffers: [inputBuffer1, widthHeightBuffer, rgbBuffer],
-                   numThreadGroups: numThreadgroups,
-                   numThreadsPerThreadgroup: threadsPerThreadgroup)
+    rgbKernel.exec2d(commandQueue,
+                     buffers: [inputBuffer1, widthHeightBuffer, rgbBuffer],
+                     width: width, height: height)
 
     let pixelData : UnsafeMutablePointer<UInt8> = pointerFromBuffer(rgbBuffer, capacity: width * height * 3)
 

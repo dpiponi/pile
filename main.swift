@@ -1,33 +1,5 @@
 import MetalKit
 
-func stable(width : Int, height : Int,
-            inputBuffer1 : MTLBuffer, outputBuffer : MTLBuffer,
-            widthHeightBuffer : MTLBuffer) -> Void {
-    let numThreadgroups = MTLSize(width: (width + w - 1) / w,
-                                   height: (height + h - 1) / h,
-                                   depth: 1)
-    let threadsPerThreadgroup = MTLSize(width: w, height: h, depth: 1)
-
-    while true {
-        // Needs to be an even length loop
-        for t in 0...255 {
-            let buffers = (t % 2 == 0
-                ? [inputBuffer1, widthHeightBuffer, outputBuffer]
-                : [outputBuffer, widthHeightBuffer, inputBuffer1])
-
-            explodeKernel.exec(commandQueue,
-                               buffers: buffers,
-                               numThreadGroups: numThreadgroups,
-                               numThreadsPerThreadgroup: threadsPerThreadgroup);
-        }
-
-        let tallest = maxGrains(inputBuffer: inputBuffer1, width: width, height: height)
-        if (tallest < 4) {
-          return
-        }
-    }
-}
-
 func main() {
     let height : Int = 768
     let width : Int = 768
