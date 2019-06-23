@@ -2,8 +2,8 @@ import MetalKit
 
 func main() {
     print(device.name)
-    let height : Int = 2048
-    let width : Int = 2048
+    let height : Int = 3584
+    let width : Int = 3584
 
     let z = Int(CommandLine.arguments[1])!
     let doubles = z
