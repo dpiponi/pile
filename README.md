@@ -6,7 +6,7 @@ Abelian Sandpiles
 Rewritten for Swift/Metal.
 Extremely unpolished. Read the source code in `main.swift`. Change parameters by modifying the source :)
 Build with `make`.
-Run with `./pile <n>` and it'll do `n` grains dropped in the centre.
+Run with `./pile <n>` and it'll do `2^n` grains dropped in the centre.
 It just renders the bottom right corner.
 Use `stitch.sh <in> <out>` to construct the full image by symmetry.
 (I'm too lazy to study ImageMagick. So it doubles the middle row and column.)
