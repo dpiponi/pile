@@ -3,7 +3,7 @@
 Abelian Sandpiles
 -----------------
 
-Rewritten for Swift/Metal
+Rewritten for Swift/Metal.
 Extremely unpolished. Read the source code in `main.swift`. Change parameters by modifying the source :)
 Build with `make`.
 Run with `./pile <n>` and it'll do `n` grains dropped in the centre.
