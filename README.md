@@ -1,6 +1,7 @@
 # pile
 
 Abelian Sandpiles
+-----------------
 
 Rewritten for Swift/Metal
 Extremely unpolished. Read the source code in `main.swift`. Change parameters by modifying the source :)
