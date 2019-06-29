@@ -28,6 +28,35 @@ kernel void explode(const device uint8_t *in [[ buffer(0) ]],
   }
 }
 
+kernel void explode_and_count(const device uint8_t *in [[ buffer(0) ]],
+                              device uint *width_height [[ buffer(1) ]],
+                              device uint8_t *out [[ buffer(2) ]],
+                              device uint32_t *counts [[ buffer(3) ]],
+                              uint2 id [[ thread_position_in_grid ]]) {
+  uint height = width_height[0];
+  uint width = width_height[1];
+
+  if (id.y < height && id.x < width) {
+      uint offset = width * id.y + id.x;
+      uint8_t count = in[offset];
+      counts[offset] += count / 4;
+      count = count % 4;
+      if (id.x > 0) {
+          count += in[offset - 1] / 4;
+      }
+      if (id.y > 0) {
+          count += in[offset - width] / 4;
+      }
+      if (id.x < width - 1) {
+          count += in[offset + 1] / 4;
+      }
+      if (id.y < height - 1) {
+          count += in[offset + width] / 4;
+      }
+      out[offset] = count;
+  }
+}
+
 kernel void symmetric_explode(const device uint8_t *in [[ buffer(0) ]],
                               device uint *width_height [[ buffer(1) ]],
                               device uint8_t *out [[ buffer(2) ]],
@@ -74,9 +103,36 @@ kernel void make_rgb(const device uint8_t *in [[ buffer(0) ]],
   }
 }
 
+kernel void make_count_rgb(const device uint32_t *in [[ buffer(0) ]],
+                           device uint *width_height [[ buffer(1) ]],
+                           device uint8_t *out [[ buffer(2) ]],
+                           uint2 id [[ thread_position_in_grid ]]) {
+  uint height = width_height[0];
+  uint width = width_height[1];
+
+  if (id.y < height && id.x < width) {
+      uint offset = width * id.x + id.y;
+      out[3 * offset] = in[offset] >> 9;
+      out[3 * offset + 1] = in[offset] >> 9;
+      out[3 * offset + 2] = in[offset] >> 9;
+  }
+}
+
 kernel void two_times(device uint8_t *inout [[ buffer(0) ]],
                      device uint *width_height [[ buffer(1) ]],
                      uint2 id [[ thread_position_in_grid ]]) {
+  uint height = width_height[0];
+  uint width = width_height[1];
+
+  if (id.y < height && id.x < width) {
+      uint offset = width * id.x + id.y;
+      inout[offset] <<= 1;
+  }
+}
+
+kernel void two_times_count(device uint32_t *inout [[ buffer(0) ]],
+                            device uint *width_height [[ buffer(1) ]],
+                            uint2 id [[ thread_position_in_grid ]]) {
   uint height = width_height[0];
   uint width = width_height[1];
 
