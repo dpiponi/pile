@@ -3,6 +3,8 @@
 Abelian Sandpiles
 -----------------
 
+Added Acorn Atom BASIC/6502 version `pile.bas`
+
 Rewritten for Swift/Metal.
 Extremely unpolished. Read the source code in `main.swift`. Change parameters by modifying the source :)
 Build with `make`.
