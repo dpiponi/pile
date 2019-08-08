@@ -3,7 +3,13 @@
 Abelian Sandpiles
 -----------------
 
-Added Acorn Atom BASIC/6502 version `pile.bas`
+The project contains four small applications to simulate abelian sandpiles.
+Each one has its own directory.
+
+`Atom/`
+`    /pile.bas`
+This is a version in 6502 assembly language for the Acorn Atom.
+Simply load it up into an Acorn Atom (or emulator) and run.
 
 Rewritten for Swift/Metal.
 Extremely unpolished. Read the source code in `main.swift`. Change parameters by modifying the source :)
