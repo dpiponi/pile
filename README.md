@@ -6,7 +6,7 @@ Abelian Sandpiles
 The project contains four small applications to simulate abelian sandpiles.
 Each one has its own directory.
 
-![Example](2²⁷_grain_abelian_sandpile.png)
+![Example](2to28sandpile.png)
 
 Acorn Atom
 ----------
