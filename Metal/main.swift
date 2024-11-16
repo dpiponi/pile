@@ -26,8 +26,8 @@ func main() {
     // https://stackoverflow.com/questions/42561558/update-contents-of-mtlbuffer-in-metal
 
     print(device.name)
-    let height : Int = 384
-    let width : Int = 384
+    let height : Int = 6144
+    let width : Int = 6144
 
     let z = Int(CommandLine.arguments[1])!
     let doubles = z
@@ -54,7 +54,7 @@ func main() {
     let countBuffer = makeCountBuffer(width: width, height: height)
 
     print("Start")
-    for i in 0...doubles-1 {
+    for i in 0...doubles {
         print("Doubles to go", doubles - i)
 //        symmetricStable(width: width, height: height,
 //                        inputBuffer1: inputBuffer1, outputBuffer: outputBuffer,
@@ -63,12 +63,15 @@ func main() {
                        inputBuffer1: inputBuffer1, outputBuffer: outputBuffer,
                        widthHeightBuffer: widthHeightBuffer,
                        countBuffer: countBuffer)
-        twoTimes(width: width, height: height,
-                  inputBuffer1: inputBuffer1,
-                  widthHeightBuffer: widthHeightBuffer)
-        twoTimesCount(width: width, height: height,
-                      countBuffer: countBuffer,
-                      widthHeightBuffer: widthHeightBuffer)
+        if i < doubles
+        {
+          twoTimes(width: width, height: height,
+                    inputBuffer1: inputBuffer1,
+                    widthHeightBuffer: widthHeightBuffer)
+          twoTimesCount(width: width, height: height,
+                        countBuffer: countBuffer,
+                        widthHeightBuffer: widthHeightBuffer)
+        }
     }
 
     saveImage(filename: String(format: "xxx.%d.png", z),
